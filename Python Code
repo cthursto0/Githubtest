@@ -1,0 +1,86 @@
+# Import definitions, subprocesses and time
+from datetime import datetime, time
+import time
+import socket
+import subprocess
+
+import os
+
+# Create a checkport function to correctly log hosts and ports together
+def CheckPort(host, port):
+    s=socket.socket()
+    try:
+        s.connect((host,port))
+    except:
+        return False
+    else:
+        return True
+
+# Since every scan must create a new file, I need to find a way to overwrite it.
+xfile = open("ScanResults", "w")
+
+# The user must enter the host and the port range
+host = input("Enter host IP address: ")
+MinRange = int(input('Enter starting port number: '))
+MaxRange = int(input('Enter ending port number: '))
+#Define Range
+CheckRange = range(MinRange, MaxRange+1, 1)
+# Remember to add +1 in the range to make sure that it advances by that integer
+# fetch current time
+# define datetime object containing current date and time
+now = datetime.now()
+# format dd/mm/yy hh:mm:ss
+dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
+start = time.time()
+
+#make sure that the host exists before proceeding
+status=subprocess.getstatusoutput("ping -n 1 " + host)
+#use this command to ping the host first.
+result=str(status)
+if (result.startswith("(0")):
+    print("Host is responding.  Proceeding with port scan.")
+    print("Scan beginning at: ", dt_string)
+    RespTup = [host, "is responding. Beginning scan at", dt_string, "\n"]
+    RespOut = ' '.join(RespTup)
+    xfile.write(RespOut)
+else:
+    print("Host is not responding.  Aborting scan")
+    RespTup = [host, "is not responding. Scan aborted at", dt_string,"\n"]
+    # finish the tuple if the scan failed
+    RespOut = ' '.join(RespTup)  # make a string for the new write command
+    xfile.write(RespOut)
+    xfile.close()
+    exit()
+
+
+print('Analyzing.....')
+
+#check each port in the range
+for x in CheckRange:
+    if CheckPort(host,x):
+        print("port ", x, " is open")
+        CheckTup = ["Port", str(x), "is open.", "\n"]
+        RespOut = ' '.join(CheckTup)
+        xfile.write(RespOut)
+
+    else:
+        print('port ', x, ' is closed')
+        CheckTup = ["Port", str(x), "is closed.", "\n"]
+        RespOut = ' '.join(CheckTup)
+        xfile.write(RespOut)
+#This if then loop defines closed and open ports
+#The program functionally ends here
+end = time.time()
+print("Task completed. Port range", MinRange, " - ", MaxRange, " has been scanned.")
+elapsed = end - start
+now = datetime.now()
+dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
+print("Scan completed at: ", dt_string)
+print("Total scan time: ", "%.2f" % elapsed, "seconds.")
+FinTup = ["Scan completed at", str(dt_string), "\n"]
+FinOut = ' '.join(FinTup)
+xfile.write(FinOut)
+FinTup = ["Total scan time:","%.2f" % elapsed, "seconds.", "\n"]
+FinOut = ' '.join(FinTup)
+xfile.write(FinOut)
+xfile.close()
